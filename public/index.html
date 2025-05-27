@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>珍奶價格追蹤</title>
+</head>
+<body>
+  <h1>珍奶價格記錄表</h1>
+
+  <form id="priceForm">
+    <label>日期：<input type="date" id="date" required></label><br>
+    <label>商品名稱：<input type="text" id="item_name" value="珍珠奶茶" required></label><br>
+    <label>價格：<input type="number" id="price" required></label><br>
+    <label>店家：<input type="text" id="store" required></label><br>
+    <button type="submit">新增價格</button>
+  </form>
+
+  <hr>
+
+  <h2>價格紀錄</h2>
+  <table border="1" id="priceTable">
+    <thead>
+      <tr>
+        <th>日期</th>
+        <th>商品名稱</th>
+        <th>價格</th>
+        <th>店家</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const API_BASE = 'http://localhost:3001';
+
+    document.getElementById('priceForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const data = {
+        date: document.getElementById('date').value,
+        item_name: document.getElementById('item_name').value,
+        price: parseFloat(document.getElementById('price').value),
+        store: document.getElementById('store').value
+      };
+
+      const res = await fetch(`${API_BASE}/add-price`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+
+      if (res.ok) {
+        alert('新增成功！');
+        loadPrices(); // 重新載入資料
+      } else {
+        alert('新增失敗');
+      }
+    });
+
+    async function loadPrices() {
+      const res = await fetch(`${API_BASE}/prices`);
+      const data = await res.json();
+      const tbody = document.querySelector('#priceTable tbody');
+      tbody.innerHTML = '';
+
+      data.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${row.date}</td>
+          <td>${row.item_name}</td>
+          <td>${row.price}</td>
+          <td>${row.store}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    loadPrices();
+  </script>
+</body>
+</html>

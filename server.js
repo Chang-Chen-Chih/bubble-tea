@@ -8,21 +8,18 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(cors());
 app.use(express.json());
 
-// 🔧 民國年轉西元年函數
+// 民國年 → 西元年轉換（仍保留支援）
 function toAD(rocDate) {
-  // 若格式為 YYYY-MM-DD（已是西元），直接回傳
-  if (rocDate.includes('-')) return rocDate;
-
+  if (rocDate.includes('-')) return rocDate; // 已是西元格式
   const [year, month, day] = rocDate.split('/');
   const adYear = parseInt(year) + 1911;
   return `${adYear}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
 }
 
-// 新增房價資料（支援民國年）
+// 新增房價
 app.post('/add-price', (req, res) => {
   let { date, location, price, size } = req.body;
-  date = toAD(date); // ✨轉為西元
-
+  date = toAD(date);
   const sql = `
     INSERT INTO house_prices (date, location, price, size)
     VALUES (?, ?, ?, ?)
@@ -36,18 +33,16 @@ app.post('/add-price', (req, res) => {
   });
 });
 
-// 顯示所有房價資料
+// 查全部
 app.get('/prices', (req, res) => {
   const sql = `SELECT * FROM house_prices ORDER BY date ASC`;
   db.all(sql, [], (err, rows) => {
-    if (err) {
-      return res.status(500).json({ error: '查詢失敗' });
-    }
+    if (err) return res.status(500).json({ error: '查詢失敗' });
     res.json(rows);
   });
 });
 
-// 查詢指定日期範圍（YYYY-MM-DD）
+// 查日期範圍
 app.get('/search', (req, res) => {
   const { start, end } = req.query;
   const sql = `
@@ -56,9 +51,21 @@ app.get('/search', (req, res) => {
     ORDER BY date ASC
   `;
   db.all(sql, [start, end], (err, rows) => {
-    if (err) {
-      return res.status(500).json({ error: '查詢失敗' });
-    }
+    if (err) return res.status(500).json({ error: '查詢失敗' });
+    res.json(rows);
+  });
+});
+
+// ✅ 新增：查地區
+app.get('/search-location', (req, res) => {
+  const { location } = req.query;
+  const sql = `
+    SELECT * FROM house_prices
+    WHERE location LIKE ?
+    ORDER BY date ASC
+  `;
+  db.all(sql, [`%${location}%`], (err, rows) => {
+    if (err) return res.status(500).json({ error: '地區查詢失敗' });
     res.json(rows);
   });
 });

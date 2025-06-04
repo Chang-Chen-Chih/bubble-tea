@@ -39,6 +39,7 @@
         <th>地點</th>
         <th>總價（萬元）</th>
         <th>總面積（坪）</th>
+        <th>單價（萬元/坪）</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -86,19 +87,29 @@
     function renderTable(data) {
       const tbody = document.querySelector('#priceTable tbody');
       tbody.innerHTML = '';
+
       data.forEach(row => {
+        const price = parseFloat(row.price);
+        const size = parseFloat(row.size);
+        let unitPrice = 'N/A';
+
+        if (!isNaN(price) && !isNaN(size) && size !== 0) {
+          unitPrice = (price / size).toFixed(2); // 保留 2 位小數
+        }
+
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${row.date}</td>
           <td>${row.location}</td>
           <td>${row.price}</td>
           <td>${row.size}</td>
+          <td>${unitPrice}</td>
         `;
         tbody.appendChild(tr);
       });
     }
 
-    // 查詢日期
+    // 查詢日期區間
     document.getElementById('searchBtn').addEventListener('click', () => {
       const start = document.getElementById('startDate').value;
       const end = document.getElementById('endDate').value;
@@ -109,12 +120,12 @@
       }
     });
 
-    // 顯示全部
+    // 顯示全部資料
     document.getElementById('showAllBtn').addEventListener('click', () => {
       loadPrices();
     });
 
-    // ✅ 地區查詢
+    // 查詢地區名稱
     document.getElementById('searchLocationBtn').addEventListener('click', async () => {
       const location = document.getElementById('locationInput').value.trim();
       if (!location) {
@@ -127,8 +138,9 @@
       renderTable(data);
     });
 
-    // 初次載入
+    // 首次載入資料
     loadPrices();
-  </script>
+</script>
+
 </body>
 </html>

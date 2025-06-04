@@ -2,48 +2,57 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
-  <title>房價紀錄表</title>
+  <title>房價查詢系統</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>房價紀錄表</h1>
+  <div class="parent">
+    <div class="div1">🏡 房價查詢系統</div>
 
-  <form id="priceForm">
-    <label>日期：<input type="date" id="date" required></label><br>
-    <label>地點：<input type="text" id="location" required></label><br>
-    <label>總價（萬元）：<input type="number" id="price" required></label><br>
-    <label>總面積（坪）：<input type="text" id="size" required></label><br>
-    <button type="submit">新增房價</button>
-  </form>
+    <div class="div2">
+      <h3>新增房價資料</h3>
+      <form id="priceForm">
+        <label>日期：<input type="date" id="date" required></label>
+        <label>地點：<input type="text" id="location" required></label>
+        <label>總價（萬元）：<input type="number" id="price" required></label>
+        <label>總面積（坪）：<input type="text" id="size" required></label>
+        <button type="submit">新增房價</button>
+      </form>
+      <p id="serverMessage" style="color: green;"></p>
+    </div>
 
-  <p id="serverMessage" style="color: green;"></p>
+    <div class="div3">
+      <h3>查詢房價資料</h3>
+      <label>起始日期：<input type="date" id="startDate"></label>
+      <label>結束日期：<input type="date" id="endDate"></label>
+      <button id="searchBtn">查詢</button>
+      <button id="showAllBtn">顯示全部</button>
 
-  <hr>
+      <h3>依地區查詢</h3>
+      <label>地區關鍵字：<input type="text" id="locationInput"></label>
+      <button id="searchLocationBtn">查詢地區</button>
+    </div>
 
-  <h2>查詢房價資料</h2>
-  <label>起始日期：<input type="date" id="startDate"></label>
-  <label>結束日期：<input type="date" id="endDate"></label>
-  <button id="searchBtn">查詢</button>
-  <button id="showAllBtn">顯示全部</button>
+    <div class="div4">
+      <h3>📊 房價紀錄</h3>
+      <table id="priceTable">
+        <thead>
+          <tr>
+            <th>日期</th>
+            <th>地點</th>
+            <th>總價（萬元）</th>
+            <th>總面積（坪）</th>
+            <th>單價（萬元/坪）</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
 
-  <h2>依地區查詢</h2>
-  <label>地區關鍵字：<input type="text" id="locationInput"></label>
-  <button id="searchLocationBtn">查詢地區</button>
-
-  <hr>
-
-  <h2>房價紀錄</h2>
-  <table border="1" id="priceTable">
-    <thead>
-      <tr>
-        <th>日期</th>
-        <th>地點</th>
-        <th>總價（萬元）</th>
-        <th>總面積（坪）</th>
-        <th>單價（萬元/坪）</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+    <div class="div5">
+      <h3>📈 房價圖表（未來放這）</h3>
+    </div>
+  </div>
 
   <script>
     const API_BASE = 'http://localhost:3001';
@@ -78,7 +87,6 @@
       if (query && query.start && query.end) {
         url = `${API_BASE}/search?start=${query.start}&end=${query.end}`;
       }
-
       const res = await fetch(url);
       const data = await res.json();
       renderTable(data);
@@ -94,7 +102,7 @@
         let unitPrice = 'N/A';
 
         if (!isNaN(price) && !isNaN(size) && size !== 0) {
-          unitPrice = (price / size).toFixed(2); // 保留 2 位小數
+          unitPrice = (price / size).toFixed(2);
         }
 
         const tr = document.createElement('tr');
@@ -109,7 +117,6 @@
       });
     }
 
-    // 查詢日期區間
     document.getElementById('searchBtn').addEventListener('click', () => {
       const start = document.getElementById('startDate').value;
       const end = document.getElementById('endDate').value;
@@ -120,12 +127,10 @@
       }
     });
 
-    // 顯示全部資料
     document.getElementById('showAllBtn').addEventListener('click', () => {
       loadPrices();
     });
 
-    // 查詢地區名稱
     document.getElementById('searchLocationBtn').addEventListener('click', async () => {
       const location = document.getElementById('locationInput').value.trim();
       if (!location) {
@@ -138,9 +143,7 @@
       renderTable(data);
     });
 
-    // 首次載入資料
     loadPrices();
-</script>
-
+  </script>
 </body>
 </html>

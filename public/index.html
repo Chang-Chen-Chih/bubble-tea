@@ -2,29 +2,39 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
-  <title>珍奶價格追蹤</title>
+  <title>房價紀錄表</title>
 </head>
 <body>
-  <h1>珍奶價格記錄表</h1>
+  <h1>房價紀錄表</h1>
 
   <form id="priceForm">
     <label>日期：<input type="date" id="date" required></label><br>
-    <label>商品名稱：<input type="text" id="item_name" value="珍珠奶茶" required></label><br>
-    <label>價格：<input type="number" id="price" required></label><br>
-    <label>店家：<input type="text" id="store" required></label><br>
-    <button type="submit">新增價格</button>
+    <label>地點：<input type="text" id="location" required></label><br>
+    <label>總價（萬元）：<input type="number" id="price" required></label><br>
+    <label>總面積（坪）：<input type="text" id="size" required></label><br>
+    <button type="submit">新增房價</button>
   </form>
+
+  <p id="serverMessage" style="color: green;"></p>
 
   <hr>
 
-  <h2>價格紀錄</h2>
+  <h2>查詢房價資料</h2>
+  <label>起始日期：<input type="date" id="startDate"></label>
+  <label>結束日期：<input type="date" id="endDate"></label>
+  <button id="searchBtn">查詢</button>
+  <button id="showAllBtn">顯示全部</button>
+
+  <hr>
+
+  <h2>房價紀錄</h2>
   <table border="1" id="priceTable">
     <thead>
       <tr>
         <th>日期</th>
-        <th>商品名稱</th>
-        <th>價格</th>
-        <th>店家</th>
+        <th>地點</th>
+        <th>總價（萬元）</th>
+        <th>總面積（坪）</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -37,9 +47,9 @@
       e.preventDefault();
       const data = {
         date: document.getElementById('date').value,
-        item_name: document.getElementById('item_name').value,
+        location: document.getElementById('location').value,
         price: parseFloat(document.getElementById('price').value),
-        store: document.getElementById('store').value
+        size: document.getElementById('size').value
       };
 
       const res = await fetch(`${API_BASE}/add-price`, {
@@ -49,15 +59,22 @@
       });
 
       if (res.ok) {
-        alert('新增成功！');
-        loadPrices(); // 重新載入資料
+        const result = await res.json();
+        document.getElementById('serverMessage').textContent = result.message;
+        document.getElementById('priceForm').reset();
+        loadPrices();
       } else {
-        alert('新增失敗');
+        document.getElementById('serverMessage').textContent = '新增失敗';
       }
     });
 
-    async function loadPrices() {
-      const res = await fetch(`${API_BASE}/prices`);
+    async function loadPrices(query = null) {
+      let url = `${API_BASE}/prices`;
+      if (query && query.start && query.end) {
+        url = `${API_BASE}/search?start=${query.start}&end=${query.end}`;
+      }
+
+      const res = await fetch(url);
       const data = await res.json();
       const tbody = document.querySelector('#priceTable tbody');
       tbody.innerHTML = '';
@@ -66,15 +83,31 @@
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${row.date}</td>
-          <td>${row.item_name}</td>
+          <td>${row.location}</td>
           <td>${row.price}</td>
-          <td>${row.store}</td>
+          <td>${row.size}</td>
         `;
         tbody.appendChild(tr);
       });
     }
 
-    loadPrices();
+    // 查詢按鈕
+    document.getElementById('searchBtn').addEventListener('click', () => {
+      const start = document.getElementById('startDate').value;
+      const end = document.getElementById('endDate').value;
+      if (start && end) {
+        loadPrices({ start, end });
+      } else {
+        alert('請輸入起始與結束日期');
+      }
+    });
+
+    // 顯示全部按鈕
+    document.getElementById('showAllBtn').addEventListener('click', () => {
+      loadPrices();
+    });
+
+    loadPrices(); // 頁面載入時載入所有資料
   </script>
 </body>
 </html>

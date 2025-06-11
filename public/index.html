@@ -1,149 +1,101 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
+
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>房價查詢系統</title>
-  <link rel="stylesheet" href="style.css">
+
+  <!-- CSS preload -->
+  <link rel="preload" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" as="style"
+    onload="this.onload=null;this.rel='stylesheet'">
+  <noscript>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+  </noscript>
+
+  <!-- 預防 CLS -->
+  <style>
+    body {
+      min-height: 100vh;
+      background-color: #ebf8ff; /* Tailwind 的 bg-blue-50 */
+      padding: 1.5rem; /* Tailwind 的 p-6 */
+      box-sizing: border-box;
+    }
+  </style>
+
+
+  <!-- JS -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+  <script src="main.js" defer></script>
 </head>
-<body>
-  <div class="parent">
-    <div class="div1">🏡 房價查詢系統</div>
 
-    <div class="div2">
-      <h3>新增房價資料</h3>
-      <form id="priceForm">
-        <label>日期：<input type="date" id="date" required></label>
-        <label>地點：<input type="text" id="location" required></label>
-        <label>總價（萬元）：<input type="number" id="price" required></label>
-        <label>總面積（坪）：<input type="text" id="size" required></label>
-        <button type="submit">新增房價</button>
+<body class="bg-blue-50 min-h-screen p-6">
+  <div class="max-w-6xl mx-auto space-y-8">
+
+    <!-- 🏠 標題 -->
+    <header class="text-center">
+      <h1 class="text-4xl font-bold text-blue-800">🏠 房價查詢系統</h1>
+    </header>
+
+    <!-- ➕ 新增房價資料區塊 -->
+    <section class="bg-white p-6 rounded-xl shadow">
+      <h2 class="text-xl font-semibold text-blue-700 mb-4">新增房價資料</h2>
+      <form id="priceForm" class="grid md:grid-cols-4 gap-4">
+        <input type="date" id="date" required placeholder="日期" class="border rounded px-4 py-2">
+        <input type="text" id="location" required placeholder="地點" class="border rounded px-4 py-2">
+        <input type="number" id="price" required placeholder="總價（萬元）" class="border rounded px-4 py-2">
+        <input type="text" id="size" required placeholder="總面積（坪）" class="border rounded px-4 py-2">
+        <button type="submit" class="col-span-full btn-indigo">新增</button>
+        <p id="serverMessage" class="text-green-600 col-span-full"></p>
       </form>
-      <p id="serverMessage" style="color: green;"></p>
-    </div>
+    </section>
 
-    <div class="div3">
-      <h3>查詢房價資料</h3>
-      <label>起始日期：<input type="date" id="startDate"></label>
-      <label>結束日期：<input type="date" id="endDate"></label>
-      <button id="searchBtn">查詢</button>
-      <button id="showAllBtn">顯示全部</button>
+    <!-- 🔍 查詢區塊 -->
+    <section class="bg-white p-6 rounded-xl shadow">
+      <h2 class="text-xl font-semibold text-blue-700 mb-4">查詢房價資料</h2>
+      <div class="grid md:grid-cols-4 gap-4">
+        <input type="date" id="startDate" class="border rounded px-4 py-2">
+        <input type="date" id="endDate" class="border rounded px-4 py-2">
+        <input type="text" id="locationInput" placeholder="地區關鍵字" class="border rounded px-4 py-2">
+        <div class="flex gap-2">
+          <button id="searchBtn" class="btn-indigo">查詢日期</button>
+          <button id="searchLocationBtn" class="btn-green">查詢地區</button>
+          <button id="showAllBtn" class="btn-yellow">顯示全部</button>
+        </div>
+      </div>
+    </section>
 
-      <h3>依地區查詢</h3>
-      <label>地區關鍵字：<input type="text" id="locationInput"></label>
-      <button id="searchLocationBtn">查詢地區</button>
-    </div>
+    <!-- 📈 圖表區 -->
+    <section class="bg-white p-6 rounded-xl shadow">
+      <h2 class="text-xl font-semibold text-blue-700 mb-4">房價圖表</h2>
+      <canvas id="priceChart" class="w-full h-64"></canvas>
+      <div class="flex justify-center gap-4 mt-6">
+        <button class="btn-indigo" onclick="showChart('line')">趨勢圖</button>
+        <button class="btn-green" onclick="showChart('bar')">長條圖</button>
+        <button onclick="showLocationAvgPriceChart()">地區平均單價分析</button>
+      </div>
+      <p class="text-center text-gray-600 mt-2" id="chartDescription">目前顯示：趨勢圖</p>
+    </section>
 
-    <div class="div4">
-      <h3>📊 房價紀錄</h3>
-      <table id="priceTable">
+    <!-- 📊 表格區 -->
+    <section class="bg-white p-6 rounded-xl shadow">
+      <h2 class="text-xl font-semibold text-blue-700 mb-4">📊 房價紀錄</h2>
+      <table class="w-full border-collapse">
         <thead>
-          <tr>
-            <th>日期</th>
-            <th>地點</th>
-            <th>總價（萬元）</th>
-            <th>總面積（坪）</th>
-            <th>單價（萬元/坪）</th>
+          <tr class="bg-blue-100">
+            <th class="border px-4 py-2">日期</th>
+            <th class="border px-4 py-2">地點</th>
+            <th class="border px-4 py-2">總價（萬元）</th>
+            <th class="border px-4 py-2">總面積（坪）</th>
+            <th class="border px-4 py-2">單價（萬元/坪）</th>
+            <th class="border px-4 py-2">操作</th>
           </tr>
         </thead>
-        <tbody></tbody>
+        <tbody id="priceTableBody"></tbody>
       </table>
-    </div>
+    </section>
 
-    <div class="div5">
-      <h3>📈 房價圖表（未來放這）</h3>
-    </div>
   </div>
-
-  <script>
-    const API_BASE = 'http://localhost:3001';
-
-    document.getElementById('priceForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const data = {
-        date: document.getElementById('date').value,
-        location: document.getElementById('location').value,
-        price: parseFloat(document.getElementById('price').value),
-        size: document.getElementById('size').value
-      };
-
-      const res = await fetch(`${API_BASE}/add-price`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
-
-      if (res.ok) {
-        const result = await res.json();
-        document.getElementById('serverMessage').textContent = result.message;
-        document.getElementById('priceForm').reset();
-        loadPrices();
-      } else {
-        document.getElementById('serverMessage').textContent = '新增失敗';
-      }
-    });
-
-    async function loadPrices(query = null) {
-      let url = `${API_BASE}/prices`;
-      if (query && query.start && query.end) {
-        url = `${API_BASE}/search?start=${query.start}&end=${query.end}`;
-      }
-      const res = await fetch(url);
-      const data = await res.json();
-      renderTable(data);
-    }
-
-    function renderTable(data) {
-      const tbody = document.querySelector('#priceTable tbody');
-      tbody.innerHTML = '';
-
-      data.forEach(row => {
-        const price = parseFloat(row.price);
-        const size = parseFloat(row.size);
-        let unitPrice = 'N/A';
-
-        if (!isNaN(price) && !isNaN(size) && size !== 0) {
-          unitPrice = (price / size).toFixed(2);
-        }
-
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${row.date}</td>
-          <td>${row.location}</td>
-          <td>${row.price}</td>
-          <td>${row.size}</td>
-          <td>${unitPrice}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    document.getElementById('searchBtn').addEventListener('click', () => {
-      const start = document.getElementById('startDate').value;
-      const end = document.getElementById('endDate').value;
-      if (start && end) {
-        loadPrices({ start, end });
-      } else {
-        alert('請輸入起始與結束日期');
-      }
-    });
-
-    document.getElementById('showAllBtn').addEventListener('click', () => {
-      loadPrices();
-    });
-
-    document.getElementById('searchLocationBtn').addEventListener('click', async () => {
-      const location = document.getElementById('locationInput').value.trim();
-      if (!location) {
-        alert('請輸入地區關鍵字');
-        return;
-      }
-
-      const res = await fetch(`${API_BASE}/search-location?location=${encodeURIComponent(location)}`);
-      const data = await res.json();
-      renderTable(data);
-    });
-
-    loadPrices();
-  </script>
 </body>
+
 </html>

@@ -74,3 +74,16 @@ const PORT = 3001;
 app.listen(PORT, () => {
   console.log(`🚀 Server is running at http://localhost:${PORT}`);
 });
+
+// 刪除房價
+app.delete('/delete-price', (req, res) => {
+  const { id } = req.query;
+  const sql = `DELETE FROM house_prices WHERE id = ?`;
+  db.run(sql, [id], function (err) {
+    if (err) {
+      console.error('刪除失敗:', err.message);
+      return res.status(500).json({ error: '資料刪除失敗' });
+    }
+    res.json({ message: '刪除成功' });
+  });
+});
